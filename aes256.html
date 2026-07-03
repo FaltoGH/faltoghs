@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AES-CBC Encrypt / Decrypt</title>
+<!--
+Possible ChatGPT prompt:
+
+Write a single HTML file which satisfies all the following conditions:
+
+1.1. The file must be single. Do not generate two or more files. You should put CSS style and JavaScript in a one HTML file.
+
+1.2. The file must be readable. Do not minify. Readability is more important than efficiency.
+
+1.3. Do not put any unnecessary CSS style. I do not want fancy GUI. Just generate as short simple code as possible.
+
+2.1. The end-user must be able to encrypt and decrypt by AES-256.
+
+2.2. Mode is always CBC. Padding is always PKCS7. Key size is always 256-bit.
+
+2.3. The key and IV is provided by end-user. Key is 32 bytes. IV is 16 bytes. They consist only ASCII characters.
+
+2.4. Plaintext format is always UTF-8. Ciphertext format is always Base64.
+
+3.1. The end-user must be able to copy the result by one click. Maybe you can add one "copy" button in GUI.
+
+3.2. The end-user must be able to clear the input by one click. Maybe you can add one "clear" button in GUI.
+
+4. Do NOT import any library from other sources. The HTML file should be able to be used in local environment which has no internet connection.
+-->
+<style>
+body {
+    font-family: sans-serif;
+    margin: 20px;
+}
+textarea {
+    width: 100%;
+    height: 160px;
+    box-sizing: border-box;
+}
+input {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 8px;
+}
+button {
+    margin: 4px 4px 4px 0;
+}
+</style>
+</head>
+<body>
+
+<h3>AES-CBC (256-bit Key, PKCS7)</h3>
+
+<label>Key (32 ASCII characters)</label>
+<input id="key" maxlength="32">
+
+<label>IV (16 ASCII characters)</label>
+<input id="iv" maxlength="16">
+
+<label>Input</label>
+<textarea id="input"></textarea>
+
+<div>
+    <button onclick="encrypt()">Encrypt</button>
+    <button onclick="decrypt()">Decrypt</button>
+    <button onclick="copyOutput()">Copy Output</button>
+    <button onclick="clearAll()">Clear</button>
+</div>
+
+<label>Output</label>
+<textarea id="output" readonly></textarea>
+
+<script>
+function ascii16(str, name) {
+    if (str.length !== 16) {
+        throw new Error(name + " must be exactly 16 characters.");
+    }
+
+    let bytes = new Uint8Array(16);
+
+    for (let i = 0; i < 16; i++) {
+        let c = str.charCodeAt(i);
+        if (c > 127) {
+            throw new Error(name + " must contain only ASCII characters.");
+        }
+        bytes[i] = c;
+    }
+
+    return bytes;
+}
+
+function ascii32(str, name) {
+    if (str.length !== 32) {
+        throw new Error(name + " must be exactly 32 characters.");
+    }
+
+    let bytes = new Uint8Array(32);
+
+    for (let i = 0; i < 32; i++) {
+        let c = str.charCodeAt(i);
+        if (c > 127) {
+            throw new Error(name + " must contain only ASCII characters.");
+        }
+        bytes[i] = c;
+    }
+
+    return bytes;
+}
+
+async function getCryptoKey() {
+    const keyBytes = ascii32(document.getElementById("key").value, "Key");
+
+    return await crypto.subtle.importKey(
+        "raw",
+        keyBytes,
+        { name: "AES-CBC" },
+        false,
+        ["encrypt", "decrypt"]
+    );
+}
+
+function getIV() {
+    return ascii16(document.getElementById("iv").value, "IV");
+}
+
+function bytesToBase64(bytes) {
+    let s = "";
+    for (let b of bytes) {
+        s += String.fromCharCode(b);
+    }
+    return btoa(s);
+}
+
+function base64ToBytes(b64) {
+    let s = atob(b64);
+    let bytes = new Uint8Array(s.length);
+
+    for (let i = 0; i < s.length; i++) {
+        bytes[i] = s.charCodeAt(i);
+    }
+
+    return bytes;
+}
+
+async function encrypt() {
+    try {
+        const key = await getCryptoKey();
+        const iv = getIV();
+
+        const plain = new TextEncoder().encode(
+            document.getElementById("input").value
+        );
+
+        const encrypted = await crypto.subtle.encrypt(
+            {
+                name: "AES-CBC",
+                iv: iv
+            },
+            key,
+            plain
+        );
+
+        document.getElementById("output").value =
+            bytesToBase64(new Uint8Array(encrypted));
+    } catch (e) {
+        alert(e.message);
+    }
+}
+
+async function decrypt() {
+    try {
+        const key = await getCryptoKey();
+        const iv = getIV();
+
+        const cipher = base64ToBytes(
+            document.getElementById("input").value.trim()
+        );
+
+        const decrypted = await crypto.subtle.decrypt(
+            {
+                name: "AES-CBC",
+                iv: iv
+            },
+            key,
+            cipher
+        );
+
+        document.getElementById("output").value =
+            new TextDecoder().decode(decrypted);
+    } catch (e) {
+        alert("Decrypt failed.");
+    }
+}
+
+async function copyOutput() {
+    try {
+        await navigator.clipboard.writeText(
+            document.getElementById("output").value
+        );
+    } catch {
+        const t = document.getElementById("output");
+        t.select();
+        document.execCommand("copy");
+    }
+}
+
+function clearAll() {
+    document.getElementById("input").value = "";
+    document.getElementById("output").value = "";
+}
+</script>
+
+</body>
+</html>
