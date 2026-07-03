@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AES-CBC Encrypt / Decrypt</title>
     <!--
 A possible ChatGPT initial prompt:
@@ -30,21 +31,32 @@ Write a single HTML file which satisfies all the following conditions:
 4. Do NOT import any library from other sources. The HTML file should be able to be used in local environment which has no internet connection.
 -->
     <style>
+        :root {
+            --back: #333333;
+            --fore: #cccccc;
+        }
+
         body {
             font-family: sans-serif;
             margin: 20px;
+            background-color: var(--back);
+            color: var(--fore);
         }
 
         textarea {
             width: 100%;
             height: 160px;
             box-sizing: border-box;
+            background-color: var(--back);
+            color: var(--fore);
         }
 
         input {
             width: 100%;
             box-sizing: border-box;
             margin-bottom: 8px;
+            background-color: var(--back);
+            color: var(--fore);
         }
 
         button {
@@ -82,179 +94,190 @@ Write a single HTML file which satisfies all the following conditions:
 
     <label>Output</label>
     <textarea id="output" readonly></textarea>
+    <div id="messages"></label>
 
-    <script>
-
-
-        // Source - https://stackoverflow.com/a/67600346
-        // Posted by mikemaccana, modified by community. See post 'Timeline' for change history
-        // Retrieved 2026-07-03, License - CC BY-SA 4.0
-
-        const getSHA256Hash = async (input) => {
-            const textAsBuffer = new TextEncoder().encode(input);
-            const hashBuffer = await window.crypto.subtle.digest("SHA-256", textAsBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const hash = hashArray
-                .map((item) => item.toString(16).padStart(2, "0"))
-                .join("");
-            return hash;
-        };
+        <script>
 
 
-        async function fill() {
-            const value = document.getElementById("password").value;
-            const sha256hash = await getSHA256Hash(value);
-            document.getElementById("key").value = sha256hash.substring(0, 32);
-            document.getElementById("iv").value = sha256hash.substring(32, 48);
-        }
+            // Source - https://stackoverflow.com/a/67600346
+            // Posted by mikemaccana, modified by community. See post 'Timeline' for change history
+            // Retrieved 2026-07-03, License - CC BY-SA 4.0
+
+            const getSHA256Hash = async (input) => {
+                const textAsBuffer = new TextEncoder().encode(input);
+                const hashBuffer = await window.crypto.subtle.digest("SHA-256", textAsBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hash = hashArray
+                    .map((item) => item.toString(16).padStart(2, "0"))
+                    .join("");
+                return hash;
+            };
 
 
-        function ascii16(str, name) {
-            if (str.length !== 16) {
-                throw new Error(name + " must be exactly 16 characters.");
+            async function fill() {
+                const value = document.getElementById("password").value;
+                const sha256hash = await getSHA256Hash(value);
+                document.getElementById("key").value = sha256hash.substring(0, 32);
+                document.getElementById("iv").value = sha256hash.substring(32, 48);
             }
 
-            let bytes = new Uint8Array(16);
 
-            for (let i = 0; i < 16; i++) {
-                let c = str.charCodeAt(i);
-                if (c > 127) {
-                    throw new Error(name + " must contain only ASCII characters.");
+            function ascii16(str, name) {
+                if (str.length !== 16) {
+                    throw new Error(name + " must be exactly 16 characters.");
                 }
-                bytes[i] = c;
-            }
 
-            return bytes;
-        }
+                let bytes = new Uint8Array(16);
 
-        function ascii32(str, name) {
-            if (str.length !== 32) {
-                throw new Error(name + " must be exactly 32 characters.");
-            }
-
-            let bytes = new Uint8Array(32);
-
-            for (let i = 0; i < 32; i++) {
-                let c = str.charCodeAt(i);
-                if (c > 127) {
-                    throw new Error(name + " must contain only ASCII characters.");
+                for (let i = 0; i < 16; i++) {
+                    let c = str.charCodeAt(i);
+                    if (c > 127) {
+                        throw new Error(name + " must contain only ASCII characters.");
+                    }
+                    bytes[i] = c;
                 }
-                bytes[i] = c;
+
+                return bytes;
             }
 
-            return bytes;
-        }
+            function ascii32(str, name) {
+                if (str.length !== 32) {
+                    throw new Error(name + " must be exactly 32 characters.");
+                }
 
-        async function getCryptoKey() {
-            const keyBytes = ascii32(document.getElementById("key").value, "Key");
+                let bytes = new Uint8Array(32);
 
-            return await crypto.subtle.importKey(
-                "raw",
-                keyBytes,
-                { name: "AES-CBC" },
-                false,
-                ["encrypt", "decrypt"]
-            );
-        }
+                for (let i = 0; i < 32; i++) {
+                    let c = str.charCodeAt(i);
+                    if (c > 127) {
+                        throw new Error(name + " must contain only ASCII characters.");
+                    }
+                    bytes[i] = c;
+                }
 
-        function getIV() {
-            return ascii16(document.getElementById("iv").value, "IV");
-        }
-
-        function bytesToBase64(bytes) {
-            let s = "";
-            for (let b of bytes) {
-                s += String.fromCharCode(b);
-            }
-            return btoa(s);
-        }
-
-        function base64ToBytes(b64) {
-            let s = atob(b64);
-            let bytes = new Uint8Array(s.length);
-
-            for (let i = 0; i < s.length; i++) {
-                bytes[i] = s.charCodeAt(i);
+                return bytes;
             }
 
-            return bytes;
-        }
+            async function getCryptoKey() {
+                const keyBytes = ascii32(document.getElementById("key").value, "Key");
 
-        async function encrypt() {
-            try {
-                const key = await getCryptoKey();
-                const iv = getIV();
-
-                const plain = new TextEncoder().encode(
-                    document.getElementById("input").value
+                return await crypto.subtle.importKey(
+                    "raw",
+                    keyBytes,
+                    { name: "AES-CBC" },
+                    false,
+                    ["encrypt", "decrypt"]
                 );
-
-                const encrypted = await crypto.subtle.encrypt(
-                    {
-                        name: "AES-CBC",
-                        iv: iv
-                    },
-                    key,
-                    plain
-                );
-
-                document.getElementById("output").value =
-                    bytesToBase64(new Uint8Array(encrypted));
-            } catch (e) {
-                alert(e.message);
             }
-        }
 
-        async function decrypt() {
-            try {
-                const key = await getCryptoKey();
-                const iv = getIV();
-
-                const cipher = base64ToBytes(
-                    document.getElementById("input").value.trim()
-                );
-
-                const decrypted = await crypto.subtle.decrypt(
-                    {
-                        name: "AES-CBC",
-                        iv: iv
-                    },
-                    key,
-                    cipher
-                );
-
-                document.getElementById("output").value =
-                    new TextDecoder().decode(decrypted);
-            } catch (e) {
-                alert("Decrypt failed.");
+            function getIV() {
+                return ascii16(document.getElementById("iv").value, "IV");
             }
-        }
 
-
-        function swap() {
-            const i = document.getElementById("input");
-            const o = document.getElementById("output");
-            i.value = o.value;
-            o.value = "";
-        }
-
-        async function copyOutput() {
-            try {
-                await navigator.clipboard.writeText(
-                    document.getElementById("output").value
-                );
-            } catch {
-                const t = document.getElementById("output");
-                t.select();
-                document.execCommand("copy");
+            function bytesToBase64(bytes) {
+                let s = "";
+                for (let b of bytes) {
+                    s += String.fromCharCode(b);
+                }
+                return btoa(s);
             }
-        }
 
-        function clearAll() {
-            document.getElementById("input").value = "";
-            document.getElementById("output").value = "";
-        }
-    </script>
+            function base64ToBytes(b64) {
+                let s = atob(b64);
+                let bytes = new Uint8Array(s.length);
+
+                for (let i = 0; i < s.length; i++) {
+                    bytes[i] = s.charCodeAt(i);
+                }
+
+                return bytes;
+            }
+
+            function alert2(message) {
+
+                const node = document.createElement("h3");
+                node.textContent = message;
+                document.getElementById("messages").appendChild(node);
+                setTimeout(() => {
+                    node.remove();
+                }, 5000);
+            }
+
+            async function encrypt() {
+                try {
+                    const key = await getCryptoKey();
+                    const iv = getIV();
+
+                    const plain = new TextEncoder().encode(
+                        document.getElementById("input").value
+                    );
+
+                    const encrypted = await crypto.subtle.encrypt(
+                        {
+                            name: "AES-CBC",
+                            iv: iv
+                        },
+                        key,
+                        plain
+                    );
+
+                    document.getElementById("output").value =
+                        bytesToBase64(new Uint8Array(encrypted));
+                } catch (e) {
+                    alert2(e.message);
+                }
+            }
+
+            async function decrypt() {
+                try {
+                    const key = await getCryptoKey();
+                    const iv = getIV();
+
+                    const cipher = base64ToBytes(
+                        document.getElementById("input").value.trim()
+                    );
+
+                    const decrypted = await crypto.subtle.decrypt(
+                        {
+                            name: "AES-CBC",
+                            iv: iv
+                        },
+                        key,
+                        cipher
+                    );
+
+                    document.getElementById("output").value =
+                        new TextDecoder().decode(decrypted);
+                } catch (e) {
+                    alert2("Decrypt failed.");
+                }
+            }
+
+
+            function swap() {
+                const i = document.getElementById("input");
+                const o = document.getElementById("output");
+                i.value = o.value;
+                o.value = "";
+            }
+
+            async function copyOutput() {
+                try {
+                    await navigator.clipboard.writeText(
+                        document.getElementById("output").value
+                    );
+                } catch {
+                    const t = document.getElementById("output");
+                    t.select();
+                    document.execCommand("copy");
+                }
+            }
+
+            function clearAll() {
+                document.getElementById("input").value = "";
+                document.getElementById("output").value = "";
+            }
+        </script>
 
 </body>
 
