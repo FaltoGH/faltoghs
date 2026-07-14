@@ -1,0 +1,236 @@
+ASP.NET Core 백엔드 애플리케이션에서 포트 넘버를 바꾸는 방법:
+YourApplicationName.exe --urls http://localhost:12345
+
+
+
+
+vim에서의 복붙 키:
+v: visual
+y: copy
+d: cut
+p: paste
+
+
+
+
+tmux 조작법:
+Ctrl+B D: detach session
+tmux ls: tmux list-sessions과 동일합니다.
+tmux rename-session [-t target-session] new-name
+tmux a(attach, attach-session과 동일합니다.) [-t target-session]
+
+
+
+
+SQLite Data Source:
+Data Source 경로에 파일이 존재하지 않아도 된다.
+다만 Data Source 파일을 담을 directory는 미리 생성되어 있어야 한다.
+Data Source 경로에 세미콜론(";")이 포함되어있을 경우, 반드시 경로를 큰 따옴표로 감싸서 전달해줘야 한다.
+
+
+
+
+-- https://www.sqlite.org/lang_delete.html
+CREATE TABLE t1(c1 INTEGER);
+INSERT INTO t1 VALUES (2),(3),(5);
+SELECT * FROM t1;
+2
+3
+5
+DELETE FROM t1;
+SELECT * FROM t1;
+INSERT INTO t1 VALUES (7),(11),(13);
+SELECT * FROM t1 WHERE c1 < 12;
+7
+11
+DELETE FROM t1 WHERE id < 12 ;
+SELECT * FROM t1;
+13
+
+
+
+
+-- 작은 따옴표 두 개('')로 빈 문자열을 표현할 수 있다.
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1(c1 TEXT,c2 TEXT);
+INSERT t1 VALUES ('','');
+SELECT * FROM t1;
+|
+
+
+
+
+PRAGMA foreign_keys = ON;
+DROP TABLE IF EXISTS artist;
+DROP TABLE IF EXISTS track;
+CREATE TABLE artist(
+  artistid    INTEGER PRIMARY KEY, 
+  artistname  TEXT
+);
+CREATE TABLE track(
+  trackid     INTEGER,
+  trackname   TEXT, 
+  trackartist INTEGER,     -- Must map to an artist.artistid!
+  FOREIGN KEY(trackartist) REFERENCES artist(artistid)
+);
+INSERT INTO artist VALUES (1, 'Dean Martin'),(2,'Frank Sinatra');
+INSERT INTO track VALUES (11, 'That''s Amore',1),(12, 'Christmas Blues',1),(13, 'My Way', 2);
+-- This fails because the value inserted into the trackartist column (3)
+-- does not correspond to row in the artist table.
+INSERT INTO track VALUES(14, 'Mr. Bojangles', 3);
+
+Runtime error: FOREIGN KEY constraint failed (19)
+
+INSERT INTO artist VALUES(3, 'Apple'),(5,'Banana');
+INSERT INTO track VALUES(14, 'Mr. Bojangles', 3);
+DELETE FROM artist WHERE artistid = 5;
+DELETE FROM artist WHERE artistid = 3;
+
+Runtime error: FOREIGN KEY constraint failed (19)
+
+
+
+
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (c1 INTEGER PRIMARY KEY,c2 INTEGER);
+INSERT INTO t1 VALUES(2,20),(5,50);
+INSERT INTO t1 VALUES(3,33),(2,22),(5,55),(7,77);
+Runtime error: UNIQUE constraint failed: t1.c1 (19)
+SELECT * FROM t1;
+2|20
+5|50
+INSERT OR IGNORE INTO t1 VALUES(3,33),(2,22),(5,55),(7,77);
+SELECT * FROM t1;
+2|20
+3|33
+5|50
+7|77
+
+
+
+
+CREATE TABLE t1 (c1 INT PRIMARY KEY);
+CREATE TABLE t2 (c1 INT, c2 INT, PRIMARY KEY(c1,c2) );
+INSERT INTO t2 VALUES (2,2);
+INSERT INTO t2 VALUES (2,3);
+INSERT INTO t2 VALUES (2,3);
+Runtime error: UNIQUE constraint failed: t2.c1, t2.c2 (19)
+INSERT INTO t2 VALUES (3,2);
+
+
+
+
+DROP TABLE IF EXISTS t1;
+DROP TABLE IF EXISTS t2;
+CREATE TABLE t1 ( c1 INTEGER PRIMARY KEY );
+CREATE TABLE t2 ( c2 INTEGER PRIMARY KEY );
+INSERT INTO t1 VALUES (2),(3),(5),(7);
+INSERT INTO t2 VALUES (5),(7),(11),(13);
+DELETE FROM t1 WHERE c1 IN (SELECT c2 FROM t2);
+SELECT * FROM t1;
+2
+3
+
+
+
+
+DROP TABLE IF EXISTS t1;
+DROP TABLE IF EXISTS t2;
+CREATE TABLE t1(c1 INTEGER);
+CREATE TABLE t2(c2 INTEGER, c3 INTEGER);
+INSERT INTO t1 VALUES (2),(3),(3),(5);
+INSERT INTO t2 SELECT c1+10,100 FROM t1;
+SELECT * FROM t2;
+12|100
+13|100
+13|100
+15|100
+
+
+
+
+System.DllNotFoundException: Unable to load DLL 'e_sqlite3' or one of its dependencies: 지정된 모듈을 찾을 수 없습니다. (0x8007007E)
+   at System.Data.SQLite.UnsafeNativeMethods.sqlite3_config_none(SQLiteConfigOpsEnum op)
+   at System.Data.SQLite.UnsafeNativeMethods.sqlite3_config_none(SQLiteConfigOpsEnum op)
+   at System.Data.SQLite.SQLite3.StaticIsInitialized()
+   at System.Data.SQLite.SQLiteLog.PrivateInitialize(String className)
+   at System.Data.SQLite.SQLiteLog.Initialize(String className)
+   at System.Data.SQLite.SQLiteConnection..ctor(String connectionString, Boolean parseViaFramework)
+   at System.Data.SQLite.SQLiteConnection..ctor(String connectionString)
+위 예외가 발생할 시 System.Data.SQLite.Core를 설치해주면 됩니다.
+DataReader를 사용 중일 때는 CommandText를 바꿀 수 없습니다.
+DB에 읽으면서 쓰는 것만을 금지해놓은 것도 아니고 그냥 CommandText를 set 하는 것조차 못 합니다.
+
+
+
+
+https://www.sqlite.org/lang_transaction.html
+BEGIN과 END 명령어를 이용하면 파일을 수정하지 않은 채로 SQL 명령어들을 실행시킬 수 있습니다.
+END를 호출하지 않으면 파일에 변경 사항이 반영이 안 되는 것에 주의하십시오.
+만약 Transaction 중 지금껏 실행해왔던 모든 명령어를 무효화시키고 싶다면 ROLLBACK을 사용하면 됩니다.
+ROLLBACK을 사용하면 BEGIN을 입력하기 전 상태로 돌아옵니다.
+BEGIN, END, ROLLBACK을 적절히 활용해서 C# 코드를 짜면 아래와 같이 될 것입니다.
+BEGIN;
+try{
+YOUR_TRANSACTION;
+END;
+}catch{
+ROLLBACK;
+throw;}
+
+
+
+
+CREATE TABLE t1(c1 INT UNIQUE,c2 INT UNIQUE);
+INSERT INTO t1 VALUES(1,1);
+INSERT INTO t1 VALUES(1,2);
+Runtime error: UNIQUE constraint failed: t1.c1
+
+
+
+
+https://www.sqlite.org/lang_update.html
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (c1 INTEGER PRIMARY KEY, c2 INTEGER );
+INSERT INTO t1 VALUES (2,20),(3,30),(5,50),(7,70),(11,110);
+UPDATE t1 SET c2 = c2 + 1000 WHERE c1 in (2,3,5,13);
+SELECT * FROM t1;
+2|1020
+3|1030
+5|1050
+7|70
+11|110
+C#에서 ExecuteNonQuery()의 반환값은 UPDATE에 영향을 받는 모든 행의 개수입니다.
+UPDATE로 인해 column의 값이 바뀌었든 그대로든 상관없이 영향 받는 행의 개수를 반환합니다.
+
+
+
+
+
+https://www.sqlite.org/lang_upsert.html
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (c1 INTEGER PRIMARY KEY,c2 INTEGER);
+INSERT INTO t1 VALUES(2,20),(5,50);
+INSERT INTO t1 VALUES(3,33),(2,22),(5,55),(7,77) ON CONFLICT DO UPDATE SET c2=excluded.c2;
+SELECT * FROM t1;
+2|22
+3|33
+5|55
+7|77
+
+
+
+
+CREATE TABLE IF NOT EXISTS t1 ( c1 INTEGER );
+CREATE TABLE IF NOT EXISTS t2 ( c1 INTEGER );
+CREATE TABLE IF NOT EXISTS t11 ( c1 INTEGER );
+SELECT name FROM sqlite_master WHERE type = 'table';
+t1
+t2
+t11
+SELECT name FROM sqlite_master WHERE type = 'table' AND name like 't1%';
+t1
+t11
+
+
+
