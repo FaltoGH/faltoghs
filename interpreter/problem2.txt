@@ -1,0 +1,11 @@
+input
+숫자 하나, + 기호 하나, 숫자 하나가 0개 이상의 공백과 함께 주어진다.
+
+output
+계산 결과를 출력한다.
+
+sample input 1
+ 9 + 8 
+
+sample output 1
+17

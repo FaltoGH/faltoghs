@@ -1,0 +1,26 @@
+extended Backus–Naur form (EBNF)
+DIGIT = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+INTEGER = DIGIT, { DIGIT } ;
+term = INTEGER, { ( "*" | "/" ), INTEGER } ;
+expr = term, { ( "+" | "-" ), term } ;
+
+
+
+
+input
+위 EBNF로 정의된 expr에 부합하는 문자열이 주어진다. 그리고 ";"로 끝난다.
+
+output
+계산 결과를 출력한다.
+
+sample input 1
+2+2*2;
+
+sample output 1
+6
+
+sample input 2
+2+2*2-2/2;
+
+sample output 2
+5

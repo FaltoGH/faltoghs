@@ -1,11 +1,11 @@
 [user]
-	name = FaltoGH
-	email = sb051380us@gmail.com
+    name = YourNameHere
+    email = YourEmailHere@example.com
 [alias]
     c = config list --global --show-origin --show-scope --show-names
     d = diff -w
     g = remote get-url --all origin
     h = diff -w HEAD
-	l = log --oneline
+    l = log --oneline
     s = status -s
     t = ls-tree --full-tree --name-only -r HEAD
