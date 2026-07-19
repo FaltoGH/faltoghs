@@ -4,8 +4,6 @@
 #include <iostream>
 #include <assert.h>
 
-#define DEBUG 0
-
 class Token
 {
 public:
@@ -19,6 +17,7 @@ public:
         LPAREN,
         RPAREN,
         SEMI,
+        DOT,
         ERROR
     };
 
@@ -55,88 +54,107 @@ public:
 
 class Lexer
 {
-    char currentChar = ' ';
+    int pos = 0;
 
-    char nextChar()
-    {
-        return getc(stdin);
+    void advance(){
+        pos++;
+    }
+
+    char getCurrentChar(){
+        return inp[pos];
+    }
+
+    char peek(){
+        return inp[pos+1];
     }
 
 public:
+    std::string inp;
+
     Token nextToken()
     {
         Token ret;
 
-        while (currentChar == ' ')
+        while (getCurrentChar() == ' ')
         {
-            currentChar = nextChar();
+            advance();
         }
 
-        if ('0' <= currentChar && currentChar <= '9')
+        if ('0' <= getCurrentChar() && getCurrentChar() <= '9')
         {
             ret.type = Token::TOKEN_TYPE::INTEGER;
-            ret.value = (currentChar - '0');
-            currentChar = nextChar();
-            while ('0' <= currentChar && currentChar <= '9')
+            ret.value = (getCurrentChar() - '0');
+            advance();
+            while ('0' <= getCurrentChar() && getCurrentChar() <= '9')
             {
-                ret.value = (ret.value * 10) + (currentChar - '0');
-                currentChar = nextChar();
+                ret.value = (ret.value * 10) + (getCurrentChar() - '0');
+                advance();
             }
             return ret;
         }
 
-        if (currentChar == '+')
+        if (getCurrentChar() == '+')
         {
             ret.type = Token::TOKEN_TYPE::PLUS;
-            currentChar = nextChar();
+            advance();
             return ret;
         }
 
-        if (currentChar == '-')
+        if (getCurrentChar() == '-')
         {
             ret.type = Token::TOKEN_TYPE::MINUS;
-            currentChar = nextChar();
+            advance();
             return ret;
         }
 
-        if (currentChar == '*')
+        if (getCurrentChar() == '*')
         {
             ret.type = Token::TOKEN_TYPE::MUL;
-            currentChar = nextChar();
+            advance();
             return ret;
         }
 
-        if (currentChar == '/')
+        if (getCurrentChar() == '/')
         {
             ret.type = Token::TOKEN_TYPE::DIV;
-            currentChar = nextChar();
+            advance();
             return ret;
         }
 
-        if (currentChar == '(')
+        if (getCurrentChar() == '(')
         {
             ret.type = Token::TOKEN_TYPE::LPAREN;
-            currentChar = nextChar();
+            advance();
             return ret;
         }
 
-        if (currentChar == ')')
+        if (getCurrentChar() == ')')
         {
             ret.type = Token::TOKEN_TYPE::RPAREN;
-            currentChar = nextChar();
+            advance();
             return ret;
         }
 
-        if (currentChar == ';')
+        if (getCurrentChar() == ';')
         {
             ret.type = Token::TOKEN_TYPE::SEMI;
+            advance();
+            return ret;
+        }
+
+        if (getCurrentChar() == '.')
+        {
+            ret.type = Token::TOKEN_TYPE::DOT;
+            advance();
             return ret;
         }
 
         ret.type = Token::TOKEN_TYPE::ERROR;
+        advance();
         return ret;
     }
 };
+
 
 class Interpreter
 {
@@ -146,7 +164,7 @@ class Interpreter
     {
         if (currentToken.type == tokenType)
         {
-            currentToken = lexer.nextToken();
+            currentToken = lexer->nextToken();
         }
         else
         {
@@ -154,10 +172,21 @@ class Interpreter
         }
     }
 
+    
     int factor()
     {
-        // factor = INTEGER | ( "(", expr, ")" ) ;
+        // factor = ( ( "+" | "-" ), factor ) | INTEGER | ( "(", expr, ")" ) ;
         int result;
+        
+        if (currentToken.type == Token::TOKEN_TYPE::PLUS){
+            eat(Token::TOKEN_TYPE::PLUS);
+            return factor();
+        }
+
+        if (currentToken.type == Token::TOKEN_TYPE::MINUS){
+            eat(Token::TOKEN_TYPE::MINUS);
+            return -factor();
+        }
 
         if (currentToken.type == Token::TOKEN_TYPE::INTEGER)
         {
@@ -194,13 +223,13 @@ class Interpreter
         return result;
     }
 
-    Lexer lexer;
+    Lexer* lexer;
 
 public:
-    void setLexer(Lexer lexer)
+    void setLexer(Lexer* lexer)
     {
         this->lexer = lexer;
-        currentToken = (this->lexer).nextToken();
+        currentToken = (this->lexer)->nextToken();
     }
 
     int expr()
@@ -224,14 +253,31 @@ public:
 
         return result;
     }
+
+    void interprete(){
+        printf("%d ", expr());
+        eat(Token::TOKEN_TYPE::SEMI);
+        while(currentToken.type != Token::TOKEN_TYPE::DOT){
+            printf("%d ", expr());
+            eat(Token::TOKEN_TYPE::SEMI);
+        }
+    }
 };
+
+
+
 
 int main(int argc, char **argv)
 {
+    std::string s;
+    std::getline(std::cin, s);
     Lexer lexer;
+    lexer.inp = s;
     Interpreter interpreter;
-    interpreter.setLexer(lexer);
-    int result = interpreter.expr();
-    printf("%d", result);
+    interpreter.setLexer(&lexer);
+    interpreter.interprete();
     return 0;
 }
+
+
+

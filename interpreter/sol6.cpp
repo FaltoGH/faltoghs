@@ -15,7 +15,7 @@ public:
         MINUS,
         MUL,
         DIV,
-        SEMICOLON,
+        SEMI,
         ERROR
     };
 
@@ -85,7 +85,7 @@ public:
 
         if (currentChar == ';')
         {
-            ret.type = Token::TOKEN_TYPE::SEMICOLON;
+            ret.type = Token::TOKEN_TYPE::SEMI;
             return ret;
         }
 

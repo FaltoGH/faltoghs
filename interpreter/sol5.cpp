@@ -12,7 +12,7 @@ public:
     {
         NUMBER,
         OP,
-        SEMICOLON
+        SEMI
     };
 
     TOKEN_TYPE type;
@@ -33,7 +33,7 @@ public:
             return std::string(cs);
         }
 
-        if (type == TOKEN_TYPE::SEMICOLON)
+        if (type == TOKEN_TYPE::SEMI)
         {
             return ";";
         }
@@ -82,7 +82,7 @@ class Lexer
 
         if ((*currentChar) == ';')
         {
-            ret.type = Token::TOKEN_TYPE::SEMICOLON;
+            ret.type = Token::TOKEN_TYPE::SEMI;
             return ret;
         }
 
@@ -96,7 +96,7 @@ public:
         std::vector<Token> tokens;
         tokens.push_back(nextToken(&currentChar));
 
-        while (tokens.back().type != Token::TOKEN_TYPE::SEMICOLON)
+        while (tokens.back().type != Token::TOKEN_TYPE::SEMI)
         {
             tokens.push_back(nextToken(&currentChar));
         }
@@ -129,7 +129,7 @@ public:
 
         for (int i = 1; i < tokens.size(); i++)
         {
-            if (tokens[i].type == Token::TOKEN_TYPE::SEMICOLON)
+            if (tokens[i].type == Token::TOKEN_TYPE::SEMI)
             {
                 return result;
             }

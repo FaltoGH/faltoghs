@@ -18,7 +18,7 @@ public:
         DIV,
         LPAREN,
         RPAREN,
-        SEMICOLON,
+        SEMI,
         ERROR
     };
 
@@ -43,7 +43,7 @@ public:
             return "(";
         case TOKEN_TYPE::RPAREN:
             return ")";
-        case TOKEN_TYPE::SEMICOLON:
+        case TOKEN_TYPE::SEMI:
             return ";";
         case TOKEN_TYPE::ERROR:
             return "!";
@@ -129,7 +129,7 @@ public:
 
         if (currentChar == ';')
         {
-            ret.type = Token::TOKEN_TYPE::SEMICOLON;
+            ret.type = Token::TOKEN_TYPE::SEMI;
             return ret;
         }
 
