@@ -7,5 +7,6 @@
     g = remote get-url --all origin
     h = diff -w HEAD
     l = log --oneline
+    r = log --pretty=format:'%C(auto,yellow)%h %C(cyan)%ar%C(auto)%d %s'
     s = status -s
     t = ls-tree --full-tree --name-only -r HEAD
