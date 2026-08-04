@@ -1,0 +1,66 @@
+아래 EBNF로 정의된 stmt_list에 부합하는 코드가 주어질 때, 코드를 실행한다.
+
+
+-----extended Backus–Naur form (EBNF)-----
+DIGIT = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+INT = DIGIT, { DIGIT } ;
+LOW = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" ;
+ID = LOW, { LOW } ;
+
+factor = INT | ID | ( "(", assign, ")" ) | ( ( "+" | "-" ), factor ) ;
+term = factor, { ( "*" | "/" ), factor } ;
+expr = term, { ( "+" | "-" ), term } ;
+cond = expr, { ( ">" | "<" ) expr } ;
+assign = cond | ( ID, "=", cond ) ;
+
+for_stmt = "for", "(", assign, ";", assign, ";", assign, ")", "{", stmt_list "}" ;
+if_stmt = "if", "(", assign, ")", "{", stmt_list "}" ;
+print_stmt = "print", "(", assign, ")" ;
+while_stmt = "while", "(", assign, ")", "{", stmt_list "}" ;
+stmt_list = { ( assign, ";" ) | for_stmt | if_stmt | ( print_stmt, ";" ) | while_stmt }
+--------------------
+
+
+sample input 1
+ab=2+2*2-((2/2))-(2+2*2-2/2)+(0019)--++-+-2/-1*+-+1---2;
+ca=ab+1;
+ccc=(9>7+1)*9;
+if(ca>11){
+    ccc=ccc+2;
+    if(ccc<10){
+        ccc=ccc+1;
+        if(1){
+            ca=ca+1;
+        }
+        ca=ca+1;
+    }
+    ca=ca+2;
+    if(ca>21){
+        ca=ca+4;
+        while(ca<32){
+            print(ca);
+            ca=ca+2;
+        }
+    }
+}
+ab=0;
+print(ab);
+print(ca);
+print(ccc);
+for(i=100;i<400;i=i+100){
+    print(i);
+}
+print(999);
+
+
+sample output 1
+26
+28
+30
+0
+32
+11
+100
+200
+300
+999
