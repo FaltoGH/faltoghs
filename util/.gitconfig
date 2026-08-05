@@ -2,6 +2,7 @@
     name = YourNameHere
     email = YourEmailHere@example.com
 [alias]
+    a = add --all --dry-run
     c = config list --global --show-origin --show-scope --show-names
     d = diff -w
     g = remote get-url --all origin
